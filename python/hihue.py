@@ -45,12 +45,17 @@ def _get_config(isStartup: bool = False) -> Union[None, Dict[str, any]]:
     :param isStartup bool: Skip/return None if true and disable on
     startup is true
     """
-    if not (isStartup and _get_global_variable("g:hiHue#disableAtStart", 0) == 1):
+    if not (isStartup
+            and _get_global_variable("g:hiHue#disableAtStart", 0) == 1):
         if not _variable_exists('g:hiHue#bridge_ip'):
-            print("Bridge ip not defined. Please define it with e.g. `let g:hiHue#bridge_ip = '192.168.1.123'` or disable hiHue on startup")
+            print(
+                "Bridge ip not defined. Please define it with e.g. `let g:hiHue#bridge_ip = '192.168.1.123'` or disable hiHue on startup"
+            )
             return None
         if not _variable_exists('g:hiHue#light_name'):
-            print("Light name not defined. Please define it with e.g. `let g:hiHue#light_name = 'My light'` or disable hiHue on startup")
+            print(
+                "Light name not defined. Please define it with e.g. `let g:hiHue#light_name = 'My light'` or disable hiHue on startup"
+            )
             return None
         return {
             'light': vim.eval('g:hiHue#light_name'),
@@ -75,7 +80,9 @@ def _phue_config_path():
         return p
 
 
-def _connect(isStartup=False) -> Tuple[Union[Bridge, None], Union[Dict[str, any], None]]:
+def _connect(
+    isStartup=False
+) -> Tuple[Union[Bridge, None], Union[Dict[str, any], None]]:
     config = _get_config(isStartup)
     if config is None:
         return None, None
@@ -83,7 +90,7 @@ def _connect(isStartup=False) -> Tuple[Union[Bridge, None], Union[Dict[str, any]
     b = Bridge(config['ip'], config_file_path=_phue_config_path())
     b.connect()
     if newlyRegistered:
-        print("Successfully registered bridge at {config['ip']}")
+        print(f"Successfully registered bridge at {config['ip']}")
     return b, config
 
 
@@ -122,12 +129,12 @@ def _rgb_to_xy(red, green, blue):
     """
 
     # gamma correction
-    red = pow((red + 0.055) / (1.0 + 0.055),
-              2.4) if red > 0.04045 else (red / 12.92)
-    green = pow((green + 0.055) / (1.0 + 0.055),
-                2.4) if green > 0.04045 else (green / 12.92)
-    blue = pow((blue + 0.055) / (1.0 + 0.055),
-               2.4) if blue > 0.04045 else (blue / 12.92)
+    red = pow(
+        (red + 0.055) / (1.0 + 0.055), 2.4) if red > 0.04045 else (red / 12.92)
+    green = pow((green + 0.055) /
+                (1.0 + 0.055), 2.4) if green > 0.04045 else (green / 12.92)
+    blue = pow((blue + 0.055) /
+               (1.0 + 0.055), 2.4) if blue > 0.04045 else (blue / 12.92)
 
     # convert rgb to xyz
     x = red * 0.649926 + green * 0.103455 + blue * 0.197109
@@ -145,8 +152,8 @@ lastWord = ""
 lastTimestamp = 0
 currentColor = None
 lightIsFallback = True
-fallbackIfNotOverColor = int(_get_global_variable(
-    "g:hiHue#fallbackIfNotOverColor", default=1)) == 1
+fallbackIfNotOverColor = int(
+    _get_global_variable("g:hiHue#fallbackIfNotOverColor", default=1)) == 1
 colorPattern = re.compile("#[a-fA-F0-9]{3}([a-fA-F0-9]{3})?")
 
 
@@ -157,17 +164,18 @@ def _set_color(color, force=False):
         return
     if type(color) is str:
         color = tuple(
-            int(color.lstrip('#')[i:i+2], 16) / 255 for i in (0, 2, 4))
+            int(color.lstrip('#')[i:i + 2], 16) / 255 for i in (0, 2, 4))
     # Assume color is a tuple or list of 3 components
     if currentColor != color or force:
         try:
             if color != (0, 0, 0):
                 bridge.set_light(config['light'], 'on', True)
-                bridge.set_light(config['light'],
-                                 'bri',
-                                 int(float(_get_global_variable(
-                                     "g:hiHue#maxBrightness", 1.0)) * 255)
-                                 )
+                bridge.set_light(
+                    config['light'], 'bri',
+                    int(
+                        float(
+                            _get_global_variable("g:hiHue#maxBrightness", 1.0))
+                        * 255))
                 light = bridge.get_light_objects('name')[config['light']]
 
                 light.xy = _rgb_to_xy(color[0], color[1], color[2])
@@ -181,8 +189,8 @@ def _set_color(color, force=False):
 
 
 # Set the light to black aka off
-fallbackColor = _set_color(_get_global_variable(
-    "g:hiHue#fallbackColor", "00000"))
+fallbackColor = _set_color(
+    _get_global_variable("g:hiHue#fallbackColor", "00000"))
 
 
 def try_highlight_word():
@@ -206,14 +214,18 @@ def status():
     Print status information
     """
     if not os.path.isfile(_phue_config_path()):
-        print("No registered bridge!\nRegister with :HiHueConnect. Note: Run this command within 30 seconds after pressing the button on the bridge\n")
+        print(
+            "No registered bridge!\nRegister with :HiHueConnect. Note: Run this command within 30 seconds after pressing the button on the bridge\n"
+        )
     print(f"Connected = {bridge is not None}")
     print(f"IP = {config.get('ip', None) if config is not None else None}")
     print(
-        f"Light name = {config.get('light', None) if config is not None else None}")
+        f"Light name = {config.get('light', None) if config is not None else None}"
+    )
 
     print(
-        f"phue Path = {_phue_config_path()}{'' if os.path.isfile(_phue_config_path()) else '*' }")
+        f"phue Path = {_phue_config_path()}{'' if os.path.isfile(_phue_config_path()) else '*' }"
+    )
     print(f"Color = {currentColor}")
     print(f"On fallback = {lightIsFallback}")
 
@@ -230,7 +242,8 @@ def connect(*vargs):
 
         # Source: https://www.oreilly.com/library/view/regular-expressions-cookbook/9780596802837/ch07s16.html
         # and https://www.oreilly.com/library/view/regular-expressions-cookbook/9780596802837/ch07s17.html
-        if re.match(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$", arg) or re.match(r"\A(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}\Z", arg):
+        if re.match(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$", arg) or re.match(
+                r"\A(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}\Z", arg):
             ip = vargs[0]
         else:
             lightName = vargs[0]
